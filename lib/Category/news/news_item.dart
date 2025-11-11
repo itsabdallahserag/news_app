@@ -57,7 +57,7 @@ class _NewsItemState extends State<NewsItem> {
   }
 
   String formatPublished(String dateTime) {
-    try {
+    try{
       DateTime apiDate = DateTime.parse(dateTime);
       return timeago.format(apiDate, locale: 'en');
     } catch (e) {
