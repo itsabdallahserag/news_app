@@ -19,10 +19,12 @@ class Category {
           image: isDark? AssetsApp.healthDark : AssetsApp.healthLight
       ),Category(id: 'science', title: 'Science',
           image: isDark? AssetsApp.scienceDark: AssetsApp.scienceLight
-      ),Category(id: 'entertainment', title: 'Entertainment',
+      ),
+     Category(id: 'technology', title: 'Technology',
+         image: isDark? AssetsApp.technologyDark : AssetsApp.technologyLight
+     ),
+     Category(id: 'entertainment', title: 'Entertainment',
           image: isDark? AssetsApp.entertainmentDark: AssetsApp.entertainmentLight
-      ),Category(id: 'technology', title: 'Technology',
-          image: isDark? AssetsApp.technologyDark : AssetsApp.technologyLight
       )
     ];
   }

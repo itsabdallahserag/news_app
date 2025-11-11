@@ -18,8 +18,8 @@ class CategoryItem extends StatelessWidget {
               children: [
             Image.asset(category.image,fit: BoxFit.fill,width: double.infinity,),
             Container(
-              margin: EdgeInsetsGeometry.symmetric(horizontal: width*.03,vertical: height*.02),
-              width: width*.4,
+              margin: EdgeInsetsGeometry.symmetric(horizontal: width*.04,vertical: height*.03),
+              width: width*.5,
               decoration: BoxDecoration(
                 color: ColorApp.grayBgColor,
                 borderRadius: BorderRadius.circular(84),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:news_api_app/Category/news/news_item.dart';
+import 'package:news_api_app/Category/news/news_widget_view_model.dart';
 import 'package:news_api_app/api/api_manager.dart';
 import 'package:news_api_app/model/news_response.dart';
 import 'package:news_api_app/model/source_response.dart';
 import 'package:news_api_app/utils/color_app.dart';
+import 'package:provider/provider.dart';
 
 class NewsWidget extends StatefulWidget {
   const NewsWidget({super.key,required this.sources});
@@ -22,6 +24,7 @@ class _NewsWidgetState extends State<NewsWidget> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    viewModel.getSourcesBySourceId(widget.sources.id!);
     fetchNews();
     scrollController.addListener(() {
       if (scrollController.position.pixels ==
@@ -30,106 +33,69 @@ class _NewsWidgetState extends State<NewsWidget> {
       }
     });
   }
+  NewsWidgetViewModel viewModel = NewsWidgetViewModel();
   @override
   Widget build(BuildContext context) {
     var text = Theme.of(context).textTheme;
     var height = MediaQuery.of(context).size.height;
     var width = MediaQuery.of(context).size.width;
-    return FutureBuilder<NewsResponse>(
-        future: ApiManager.getNewsBySourceId(widget.sources.id??''),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(
-                color: ColorApp.grayColor,
-              ),
-            );
-          } else if (snapshot.hasError) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Something went wrong',
-                  style: Theme
-                      .of(context)
-                      .textTheme
-                      .labelLarge,
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    ApiManager.getNewsBySourceId(widget.sources.id??'');
-                    setState(() {});
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorApp.grayColor,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: width * .01,
-                      vertical: height * .001,
-                    ),
-                  ),
-                  child: Text('Try Again', style: text.displayMedium),
-                ),
-              ],
-            );
-          } else if (snapshot.data?.status != 'ok') {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  snapshot.data!.message!,
-                  style: Theme
-                      .of(context)
-                      .textTheme
-                      .labelLarge,
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    ApiManager.getNewsBySourceId(widget.sources.id??'');
-                    setState(() {});
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme
+    return ChangeNotifierProvider(
+      create: (context) => viewModel,
+      child: Consumer<NewsWidgetViewModel>(
+          builder: (context, viewModel, child) {
+            if(viewModel.errorMessage != null){
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    viewModel.errorMessage!,
+                    style: Theme
                         .of(context)
-                        .dividerColor,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: width * .01,
-                      vertical: height * .001,
-                    ),
+                        .textTheme
+                        .labelLarge,
                   ),
-                  child: Text('Try Again', style: text.displayMedium),
-                ),
-              ],
-            );
-          }
-          var newsList = snapshot.data?.articles ?? [];
-
-          if (newsList.isEmpty) {
-            return Center(
-              child: Text(
-                'No articles available for this source.',
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-            );
-          }
-
-          return  isLoading && allArticles.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : ListView.separated(
-            controller: scrollController,
-            itemCount: allArticles.length + (hasMore ? 1 : 0),
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              if (index < allArticles.length) {
-                return NewsItem(articles: allArticles[index]);
-              } else {
-                return const Center(child: CircularProgressIndicator());
-              }
+                  ElevatedButton(
+                    onPressed: () {
+                      viewModel.getSourcesBySourceId(widget.sources.id!);
+                      setState(() {});
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorApp.grayColor,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: width * .01,
+                        vertical: height * .001,
+                      ),
+                    ),
+                    child: Text('Try Again', style: text.displayMedium),
+                  ),
+                ],
+              );
+            }if(viewModel.newsList == null){
+              return Center(
+                 child: CircularProgressIndicator(
+                   color: ColorApp.grayColor,
+                 ),
+               );
+            }else{
+              return  isLoading && allArticles.isEmpty
+                 ? const Center(child: CircularProgressIndicator())
+                 : ListView.separated(
+               controller: scrollController,
+               itemCount: allArticles.length + (hasMore ? 1 : 0),
+               separatorBuilder: (context, index) => const SizedBox(height: 8),
+               itemBuilder: (context, index) {
+                 if (index < allArticles.length) {
+                   return NewsItem(articles: viewModel.newsList![index]);
+                 } else {
+                   return const Center(child: CircularProgressIndicator());
+                 }
+               }
+              );
             }
-          );
-              }
-          );
+            },
+      )
+    );
   }
   Future<void> fetchNews() async {
     setState(() {
@@ -194,4 +160,99 @@ class _NewsWidgetState extends State<NewsWidget> {
     super.dispose();
   }
 }
+//FutureBuilder<NewsResponse>(
+//           future: ApiManager.getNewsBySourceId(widget.sources.id??''),
+//           builder: (context, snapshot) {
+//             if (snapshot.connectionState == ConnectionState.waiting) {
+//               return Center(
+//                 child: CircularProgressIndicator(
+//                   color: ColorApp.grayColor,
+//                 ),
+//               );
+//             } else if (snapshot.hasError) {
+//               return Column(
+//                 crossAxisAlignment: CrossAxisAlignment.stretch,
+//                 mainAxisAlignment: MainAxisAlignment.center,
+//                 children: [
+//                   Text(
+//                     'Something went wrong',
+//                     style: Theme
+//                         .of(context)
+//                         .textTheme
+//                         .labelLarge,
+//                   ),
+//                   ElevatedButton(
+//                     onPressed: () {
+//                       ApiManager.getNewsBySourceId(widget.sources.id??'');
+//                       setState(() {});
+//                     },
+//                     style: ElevatedButton.styleFrom(
+//                       backgroundColor: ColorApp.grayColor,
+//                       padding: EdgeInsets.symmetric(
+//                         horizontal: width * .01,
+//                         vertical: height * .001,
+//                       ),
+//                     ),
+//                     child: Text('Try Again', style: text.displayMedium),
+//                   ),
+//                 ],
+//               );
+//             } else if (snapshot.data?.status != 'ok') {
+//               return Column(
+//                 crossAxisAlignment: CrossAxisAlignment.stretch,
+//                 mainAxisAlignment: MainAxisAlignment.center,
+//                 children: [
+//                   Text(
+//                     snapshot.data!.message!,
+//                     style: Theme
+//                         .of(context)
+//                         .textTheme
+//                         .labelLarge,
+//                   ),
+//                   ElevatedButton(
+//                     onPressed: () {
+//                       ApiManager.getNewsBySourceId(widget.sources.id??'');
+//                       setState(() {});
+//                     },
+//                     style: ElevatedButton.styleFrom(
+//                       backgroundColor: Theme
+//                           .of(context)
+//                           .dividerColor,
+//                       padding: EdgeInsets.symmetric(
+//                         horizontal: width * .01,
+//                         vertical: height * .001,
+//                       ),
+//                     ),
+//                     child: Text('Try Again', style: text.displayMedium),
+//                   ),
+//                 ],
+//               );
+//             }
+//             var newsList = snapshot.data?.articles ?? [];
+//
+//             if (newsList.isEmpty) {
+//               return Center(
+//                 child: Text(
+//                   'No articles available for this source.',
+//                   style: Theme.of(context).textTheme.labelLarge,
+//                 ),
+//               );
+//             }
+//
+//             return  isLoading && allArticles.isEmpty
+//                 ? const Center(child: CircularProgressIndicator())
+//                 : ListView.separated(
+//               controller: scrollController,
+//               itemCount: allArticles.length + (hasMore ? 1 : 0),
+//               separatorBuilder: (context, index) => const SizedBox(height: 8),
+//               itemBuilder: (context, index) {
+//                 if (index < allArticles.length) {
+//                   return NewsItem(articles: allArticles[index]);
+//                 } else {
+//                   return const Center(child: CircularProgressIndicator());
+//                 }
+//               }
+//             );
+//                 }
+//             ),
 
